@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>百家樂預測器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #00f5ff;
+      padding: 30px;
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      box-sizing: border-box;
+      margin: 0;
+    }
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    .container {
+      max-width: 600px;
+      width: 90%;
+      margin: auto;
+      background: rgba(0,0,0,0.8);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.3);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    h1 {
+      color: #00f5ff;
+      text-shadow: 0 0 10px #00f5ff;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    button {
+      font-size: 18px;
+      padding: 12px 22px;
+      margin: 10px 8px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #fff;
+      user-select: none;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 15px #00f5ff;
+    }
+    .banker { background-color: #ff3c3c; }
+    .player { background-color: #007fff; }
+    .tie { background-color: #00cc66; }
+    .reset { background-color: #666; }
+    .lock { background-color: #f39c12; }
+    .history, .prediction, .probability {
+      margin-top: 20px;
+    }
+    .prediction {
+      font-size: 22px;
+      font-weight: bold;
+      color: #00ffcc;
+      margin-top: 15px;
+      text-shadow: 0 0 8px #00f5ff;
+      min-height: 32px;
+    }
+    .probability {
+      font-size: 16px;
+      color: #aaa;
+    }
+    .bar-container {
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    .bar {
+      height: 12px;
+      background: #111;
+      border-radius: 5px;
+      margin: 5px 0;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.6s ease;
+    }
+    .fill-banker { background-color: #ff3c3c; }
+    .fill-player { background-color: #007fff; }
+    .fill-tie { background-color: #00cc66; }
+    input, select {
+      background-color: #111;
+      color: #0ff;
+      border: 1px solid #0ff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      user-select: text;
+      font-size: 16px;
+      box-sizing: border-box;
+      min-height: 40px;
+      margin-left: 6px;
+      margin-right: 6px;
+    }
+    table {
+      width: 100%;
+      color: #fff;
+      margin-top: 20px;
+      border-collapse: collapse;
+      table-layout: fixed;
+      word-break: break-word;
+    }
+    th, td {
+      border: 1px solid #0ff;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #011;
+    }
+    #roomWarning {
+      color: #f66;
+      font-size: 14px;
+      display: none;
+      margin-top: 5px;
+    }
+    .analysis-explanation {
+      font-size: 15px;
+      color: #fff;
+      margin-top: 15px;
+      background: rgba(0, 255, 255, 0.08);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: left;
+      white-space: pre-line;
+      min-height: 50px;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    .analysis-explanation.visible {
+      opacity: 1;
+    }
+
+    /* 手機尺寸調整 */
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      .container {
+        padding: 20px 15px;
+        width: 100%;
+        border-radius: 10px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      button {
+        font-size: 16px;
+        padding: 10px 16px;
+        margin: 8px 5px;
+        min-height: 44px;
+      }
+      input, select {
+        font-size: 16px;
+        padding: 10px;
+        min-height: 44px;
+        margin-left: 4px;
+        margin-right: 4px;
+      }
+      table, th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+      .prediction {
+        font-size: 18px;
+      }
+      .probability {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>百家樂預測器</h1>
+
+    <label for="hallSelect">選擇館廳：</label>
+    <select id="hallSelect">
+      <option value="MT">MT真人</option>
+      <option value="DG">DG真人</option>
+    </select>
+
+    <div style="margin-top: 15px;">
+      <label for="roomInput">輸入房號：</label>
+      <input type="text" id="roomInput" maxlength="3" placeholder="例如 A12" oninput="validateRoom()" />
+      <button class="lock" onclick="toggleRoomLock()" id="lockButton">鎖定</button>
+    </div>
+    <div id="roomWarning">房號格式錯誤，請輸入 3 位英數字</div>
+
+    <p style="margin-top: 20px;">請輸入歷史局結果：</p>
+    <button class="banker" onclick="addResult('B')">莊</button>
+    <button class="player" onclick="addResult('P')">閒</button>
+    <button class="tie" onclick="addResult('T')">和</button>
+    <button class="reset" onclick="resetAll()">重設</button>
+    <button class="reset" onclick="clearMemory()">清除學習記憶</button>
+
+    <div class="history" id="historyDisplay">目前紀錄：無</div>
+    <div class="prediction" id="predictionResult">預測下一局為：-</div>
+    <div class="probability" id="probabilityDisplay"></div>
+
+    <div class="bar-container">
+      <div class="bar"><div class="bar-fill fill-banker" id="barBanker" style="width: 0%"></div></div>
+      <div class="bar"><div class="bar-fill fill-player" id="barPlayer" style="width: 0%"></div></div>
+      <div class="bar"><div class="bar-fill fill-tie" id="barTie" style="width: 0%"></div></div>
+    </div>
+
+    <div class="probability" id="memoryCount">已學習局數：0</div>
+    <div class="analysis-explanation" id="analysisExplanation"></div>
+
+    <table id="historyTable">
+      <thead><tr><th>局數</th><th>結果</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 音效資源 -->
+  <audio id="audio-banker" src="https://cdn.pixabay.com/download/audio/2023/03/22/audio_783f9c9874.mp3" preload="auto"></audio>
+  <audio id="audio-player" src="https://cdn.pixabay.com/download/audio/2023/03/22/audio_5c646f9a9a.mp3" preload="auto"></audio>
+  <audio id="audio-tie" src="https://cdn.pixabay.com/download/audio/2023/03/22/audio_22eb6c9c49.mp3" preload="auto"></audio>
+
+  <script>
+    let history = [], memory = [], roomLocked = false;
+
+    function validateRoom() {
+      const input = document.getElementById("roomInput");
+      const warning = document.getElementById("roomWarning");
+      warning.style.display = /^[A-Za-z0-9]{3}$/.test(input.value) || input.value === "" ? "none" : "block";
+    }
+
+    function toggleRoomLock() {
+      const input = document.getElementById("roomInput");
+      const button = document.getElementById("lockButton");
+      roomLocked = !roomLocked;
+      input.disabled = roomLocked;
+      button.textContent = roomLocked ? "已鎖定" : "鎖定";
+    }
+
+    function addResult(result) {
+      history.push(result);
+      memory.push(result);
+      updateDisplay();
+      updateTable();
+      updateMemoryCount();
+
+      // 先顯示讀取文字
+      const predictionEl = document.getElementById("predictionResult");
+      const probEl = document.getElementById("probabilityDisplay");
+      const explanation = document.getElementById("analysisExplanation");
+      
+      predictionEl.textContent = "分析中...請稍後";
+      probEl.textContent = "";
+      explanation.textContent = "";
+      explanation.classList.remove("visible");
+      resetBars();
+
+      // 1.5秒後才顯示預測結果
+      setTimeout(() => {
+        predictNext();
+      }, 1500);
+    }
+
+    function updateDisplay() {
+      const map = { B: "莊", P: "閒", T: "和" };
+      document.getElementById("historyDisplay").textContent = "目前紀錄：" + (history.map(r => map[r]).join(", ") || "無");
+    }
+
+    function updateTable() {
+      const tbody = document.querySelector("#historyTable tbody");
+      tbody.innerHTML = "";
+      const map = { B: "莊", P: "閒", T: "和" };
+      history.forEach((r, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${i + 1}</td><td>${map[r]}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateMemoryCount() {
+      document.getElementById("memoryCount").textContent = `已學習局數：${memory.length}`;
+    }
+
+    function clearMemory() {
+      memory = [];
+      updateMemoryCount();
+      alert("已清除所有學習記憶！");
+    }
+
+    function fadeInText(element, text, duration = 1200) {
+      element.classList.remove("visible");
+      element.textContent = "";
+      let index = 0;
+      const stepTime = duration / text.length;
+      function step() {
+        if (index < text.length) {
+          element.textContent += text.charAt(index);
+          index++;
+          setTimeout(step, stepTime);
+        } else {
+          element.classList.add("visible");
+        }
+      }
+      step();
+    }
+
+    function predictNext() {
+      const predictionEl = document.getElementById("predictionResult");
+      const probEl = document.getElementById("probabilityDisplay");
+      const explanation = document.getElementById("analysisExplanation");
+
+      if (history.length === 0) {
+        predictionEl.textContent = "預測下一局為：-（尚無資料）";
+        probEl.textContent = "";
+        explanation.textContent = "";
+        explanation.classList.remove("visible");
+        resetBars();
+        return;
+      }
+
+      const count = { B: 0, P: 0, T: 0 };
+      const memCount = { B: 0, P: 0, T: 0 };
+      history.forEach(r => count[r]++);
+      memory.forEach(r => memCount[r]++);
+
+      const hLen = history.length, mLen = memory.length || 1;
+      const w = 0.5; // 權重
+      let combined = {
+        B: count.B / hLen * (1 - w) + memCount.B / mLen * w,
+        P: count.P / hLen * (1 - w) + memCount.P / mLen * w,
+        T: count.T / hLen * (1 - w) + memCount.T / mLen * w,
+      };
+
+      function clamp(v, min, max) {
+        return Math.min(Math.max(v, min), max);
+      }
+
+      combined.B = clamp(combined.B, 0.5, 0.55);
+      combined.P = clamp(combined.P, 0.5, 0.55);
+      combined.T = Math.min(combined.T, Math.min(combined.B, combined.P));
+
+      const total = combined.B + combined.P + combined.T;
+      for (let k in combined) combined[k] /= total;
+
+      function fmt(p) {
+        return (p * 100).toFixed(2);
+      }
+      const final = { B: fmt(combined.B), P: fmt(combined.P), T: fmt(combined.T) };
+
+      let prediction = "B";
+      if (combined.P > combined[prediction]) prediction = "P";
+      if (combined.T > combined[prediction]) prediction = "T";
+
+      const map = { B: "莊 (Banker)", P: "閒 (Player)", T: "和 (Tie)" };
+      predictionEl.textContent = `預測下一局為：「${map[prediction]}」`;
+
+      document.getElementById("barBanker").style.width = final.B + "%";
+      document.getElementById("barPlayer").style.width = final.P + "%";
+      document.getElementById("barTie").style.width = final.T + "%";
+
+      probEl.innerHTML = `莊：${final.B}%　｜　閒：${final.P}%　｜　和：${final.T}%`;
+
+      // 走勢分析
+      let trendText = "";
+      const last3 = history.slice(-3).join("");
+
+      // 長龍偵測
+      function detectStreak(type) {
+        let count = 0;
+        for (let i = history.length - 1; i >= 0; i--) {
+          if (history[i] === type) count++;
+          else break;
+        }
+        return count;
+      }
+      const bStreak = detectStreak("B");
+      const pStreak = detectStreak("P");
+
+      // 斷龍偵測
+      function detectBrokenDragon(type) {
+        if (history.length < 5) return false;
+        let count = 0;
+        for (let i = history.length - 2; i >= 0; i--) {
+          if (history[i] === type) count++;
+          else break;
+        }
+        return count >= 4 && history[history.length - 1] !== type;
+      }
+      const bBroken = detectBrokenDragon("B");
+      const pBroken = detectBrokenDragon("P");
+
+      // 跳二轉一判斷
+      const jumpPattern = last3 === "BBP" || last3 === "PPB";
+
+      // 單跳判斷（最近兩局不同，且不含和局）
+      const last2 = history.slice(-2);
+      const singleJump = (last2.length === 2 && last2[0] !== last2[1] && last2[0] !== 'T' && last2[1] !== 'T');
+
+      // 一轉二判斷（三局，形如 B P P 或 P B B，且排除和局）
+      const last3Arr = history.slice(-3);
+      const oneToTwo = (
+        last3Arr.length === 3 &&
+        last3Arr[0] !== last3Arr[1] &&
+        last3Arr[1] === last3Arr[2] &&
+        last3Arr[0] !== 'T' &&
+        last3Arr[1] !== 'T'
+      );
+
+      if (bStreak >= 4) {
+        trendText = `莊家已連贏 ${bStreak} 局，形成長龍走勢。`;
+      } else if (pStreak >= 4) {
+        trendText = `閒家已連贏 ${pStreak} 局，形成長龍走勢。`;
+      } else if (bBroken) {
+        trendText = "莊家長龍被打斷，走勢可能轉向。";
+      } else if (pBroken) {
+        trendText = "閒家長龍被打斷，走勢可能轉向。";
+      } else if (jumpPattern) {
+        trendText = "出現跳二轉一走勢，請注意節奏變化。";
+      } else if (oneToTwo) {
+        trendText = "偵測到一轉二走勢，可能開始回頭。";
+      } else if (singleJump) {
+        trendText = "偵測到單跳走勢，近期結果跳動頻繁。";
+      } else if (/^(B{2,})$/.test(last3)) {
+        trendText = "莊家連勝，可能持續走莊。";
+      } else if (/^(P{2,})$/.test(last3)) {
+        trendText = "閒家連勝，可能持續走閒。";
+      } else {
+        trendText = "目前走勢無明顯趨勢，保持觀察。";
+      }
+
+      fadeInText(explanation, trendText);
+
+      // 播放音效
+      playSound(prediction);
+    }
+
+    function resetAll() {
+      history = [];
+      updateDisplay();
+      updateTable();
+      updateMemoryCount();
+      document.getElementById("predictionResult").textContent = "預測下一局為：-";
+      document.getElementById("probabilityDisplay").textContent = "";
+      document.getElementById("analysisExplanation").textContent = "";
+      document.getElementById("analysisExplanation").classList.remove("visible");
+      resetBars();
+    }
+
+    function resetBars() {
+      document.getElementById("barBanker").style.width = "0%";
+      document.getElementById("barPlayer").style.width = "0%";
+      document.getElementById("barTie").style.width = "0%";
+    }
+
+    function playSound(prediction) {
+      const sounds = {
+        B: document.getElementById("audio-banker"),
+        P: document.getElementById("audio-player"),
+        T: document.getElementById("audio-tie")
+      };
+      for (const key in sounds) {
+        sounds[key].pause();
+        sounds[key].currentTime = 0;
+      }
+      sounds[prediction].play().catch(() => {});
+    }
+  </script>
+</body>
+</html>
